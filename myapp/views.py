@@ -1,5 +1,7 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
+from django.views.decorators.csrf import csrf_exempt #보안과 관련된 csrf를 우회할 수 있게 해줌
 import random
+nextId = 4
 topics = [
   {'id':1, 'title':'routing', 'body':'Routing is ..'},
   {'id':2, 'title':'view', 'body':'View is ..'},
@@ -25,6 +27,8 @@ def HTMLTemplate(articleTag):
   </body>
   </html>
 '''
+
+
 # Create your views here.
 def index(request):
   article='''
@@ -33,11 +37,28 @@ def index(request):
   '''
   return HttpResponse(HTMLTemplate(article))
 
+
+@csrf_exempt
 def create(request):
-  article='''
-    <input type="text">
-  '''
-  return HttpResponse(HTMLTemplate(article))
+  global nextId
+  print("request.method", request.method)
+  if request.method == 'GET':
+    article='''
+      <form action="/create/" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p><textarea name="body" placeholder="body"></textarea></p>
+        <p><input type="submit"></p>
+      </form>
+      '''
+    return HttpResponse(HTMLTemplate(article))
+  elif request.method == 'POST':
+    title = request.POST['title']
+    body = request.POST['body']
+    newTopic = {"id":nextId, "title":title, "body":body}
+    url='/read/'+str(nextId)
+    nextId += 1
+    topics.append(newTopic)
+    return redirect(url)
 
 def read(request, id):
   global topics
