@@ -1,31 +1,74 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
+from django.views.decorators.csrf import csrf_exempt #보안과 관련된 csrf를 우회할 수 있게 해줌
 import random
+nextId = 4
 topics = [
   {'id':1, 'title':'routing', 'body':'Routing is ..'},
   {'id':2, 'title':'view', 'body':'View is ..'},
   {'id':3, 'title':'model', 'body':'Model is ..'}
 ]
-# Create your views here.
-def index(request):
+
+def HTMLTemplate(articleTag):
   global topics
   ol = ''
   for topic in topics:
     ol += f'<li><a href="/read/{topic["id"]}">{topic["title"]}</a></li>'
+<<<<<<< HEAD
   return HttpResponse(f'''
+=======
+  return f'''
+>>>>>>> 59bc3ae5f8074173bcae8ec544c905408ef02055
   <html>
   <body>
-    <h1>Django</h1>
-    <ol>
+    <h1><a href="/">Django</a></h1>
+    <ul>
       {ol}
-    </ol>
-    <h2>Welcome</h2>
-    Hello, Django
+    </ul>
+    {articleTag}
+    <ul>
+      <li><a href="/create/">create</a></li>
+    </ul>
   </body>
   </html>
-''')
+'''
 
+
+# Create your views here.
+def index(request):
+  article='''
+  <h2>Welcome</h2>
+  Hello, Django
+  '''
+  return HttpResponse(HTMLTemplate(article))
+
+
+@csrf_exempt
 def create(request):
-  return HttpResponse('Create')
+  global nextId
+  print("request.method", request.method)
+  if request.method == 'GET':
+    article='''
+      <form action="/create/" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p><textarea name="body" placeholder="body"></textarea></p>
+        <p><input type="submit"></p>
+      </form>
+      '''
+    return HttpResponse(HTMLTemplate(article))
+  elif request.method == 'POST':
+    title = request.POST['title']
+    body = request.POST['body']
+    newTopic = {"id":nextId, "title":title, "body":body}
+    url='/read/'+str(nextId)
+    nextId += 1
+    topics.append(newTopic)
+    return redirect(url)
 
 def read(request, id):
-  return HttpResponse('Read!'+id)
+  global topics
+  article=''
+  for topic in topics:
+    if topic['id'] == int(id):
+      article = f'<h2>{topic["title"]}</h2>{topic["body"]}'
+
+  return HttpResponse(HTMLTemplate(article))
